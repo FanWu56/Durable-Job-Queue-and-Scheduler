@@ -3,6 +3,7 @@ import json
 
 import job_queue
 import db
+import job_worker
 
 app = typer.Typer()
 
@@ -75,6 +76,18 @@ def jobs(limits: int = 20):
             f"attempts={a_single_job['attempts']}/{a_single_job['max_attempts']} "
             f"run_at={a_single_job['run_at']}"
         )
+
+
+@app.command()
+def worker(
+    worker_id: str | None = typer.Option(None, "--worker_id"),
+    poll_interval: float | None = typer.Option(1, "--poll_interval"),
+    once: bool | None = typer.Option(False, "--once")
+):
+    job_worker.run_worker(worker_id, poll_interval, once)
+
+
+
 
 
 
