@@ -71,25 +71,50 @@ def mark_job_succeeded(job_id):
             )
 
 
-def mark_job_failed(job_id, err_reason):
+def calculate_backoff_seconds(attempts_before_failure: int) -> int:
     """
-    For now temporary make fail jobs = "dead", will change it later
+    Exponential backoff:
+    1st failure: 10 seconds
+    2nd failure: 20 seconds
+    3rd failure: 40 seconds
+    max: 300 seconds
     """
+    return min(300, 10 * (2 ** attempts_before_failure))
+
+
+def mark_job_failed(job_id : int, err_reason: str, attempts_before_failure : int):
+    """
+    Retry the job with backoff until max_attempts is reached.
+    If max_attempts is reached, move it to dead-letter state.
+    """
+    delay_seconds = calculate_backoff_seconds(attempts_before_failure)
+
     with db.get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 UPDATE jobs
-                SET status = 'dead',
-                    attempts = attempts + 1,
+                SET attempts = attempts + 1,
+                    status = CASE
+                        WHEN attempts + 1 >= max_attempts THEN 'dead'
+                        ELSE 'queued'
+                    END,
+
+                    run_at = CASE
+                        WHEN attempts + 1 >= max_attempts THEN run_at  -- If max attempts is reached, stop updating run_at
+                        ELSE now() + (%s * interval '1 second')
+                    END,
+                    
                     last_error = %s,
                     locked_by = NULL,
                     locked_at = NULL,
                     updated_at = now()
-                WHERE id = %s;
+                WHERE id = %s
+                RETURNING id, status, attempts, max_attempts, run_at, last_error;
                 """,
-                (err_reason, job_id)
+                (delay_seconds, err_reason, job_id)
             )
+            return cur.fetchone()
 
 
 def run_worker(
@@ -126,9 +151,13 @@ def run_worker(
                 mark_job_succeeded(job_id)
                 print(f"Job #{job_id} succeeded.")
             except Exception as exc:
-                mark_job_failed(job_id, str(exc))
-                print(f"#{job_id}: {task_name} failed, error: {exc}")
-
+                updated_job = mark_job_failed(job_id, str(exc), job["attempts"])
+                print(
+                    f"Job #{job_id} failed: {exc}. "
+                    f"status={updated_job['status']} "
+                    f"attempts={updated_job['attempts']}/{updated_job['max_attempts']} "
+                    f"next_run_at={updated_job['run_at']}"
+    )
             if once:
                 return
 
