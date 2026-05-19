@@ -74,5 +74,18 @@ def get_recent_jobs(limits : int = 20):
             return cur.fetchall()
 
 
-
+def get_job_attempts(job_id : int):
+    """
+    get job attempts logs
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT * FROM job_attempts
+                WHERE job_id = %s
+                ORDER BY id ASC
+                """, (job_id,)
+            )
+            return cur.fetchall()
 
