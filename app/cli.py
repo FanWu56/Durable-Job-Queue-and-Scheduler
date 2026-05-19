@@ -87,7 +87,28 @@ def worker(
     job_worker.run_worker(worker_id, poll_interval, once)
 
 
+@app.command()
+def attempts(job_id : int):
+    """
+    Show execution attempts for a job.
+    """
+    row = job_queue.get_job_attempts(job_id)
 
+    if row == None:
+        typer.echo(f"job_id #: {job_id} not exist")
+        return
+    
+    for i in row:
+        typer.echo(
+            f"attempt #{i['id']}\n "
+            f"job=#{i['job_id']}\n "
+            f"worker={i['worker_id']}\n "
+            f"status={i['status']}\n "
+            f"started_at={i['started_at']}\n "
+            f"finished_at={i['finished_at']}\n "
+            f"error={i['error']}"
+    )
+        
 
 
 
