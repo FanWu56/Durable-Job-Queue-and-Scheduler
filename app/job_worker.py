@@ -146,12 +146,16 @@ def run_worker(
             task_name = job["task_name"]
             payload = job["payload"]
 
+            attempt = start_job_attempt(job_id, worker_id)
+
             try:
                 tasks.execute_task(task_name, payload)
                 mark_job_succeeded(job_id)
+                finish_job_attempt(attempt["id"], "succeeded", None)
                 print(f"Job #{job_id} succeeded.")
             except Exception as exc:
                 updated_job = mark_job_failed(job_id, str(exc), job["attempts"])
+                finish_job_attempt(attempt["id"], "failed", str(exc))
                 print(
                     f"Job #{job_id} failed: {exc}. "
                     f"status={updated_job['status']} "
@@ -160,6 +164,51 @@ def run_worker(
     )
             if once:
                 return
+            
+
+def start_job_attempt(job_id : int, worker_id : str):
+    """
+    Add job attempt logs when worker start
+    """
+    with db.get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO job_attempts(
+                job_id,
+                worker_id,
+                status,
+                started_at
+                )
+                VALUES(%s, %s, 'running', now())
+                RETURNING id, job_id, worker_id, status, started_at
+                """,
+                (job_id, worker_id)
+            )
+            return cur.fetchone()
+        
+
+def finish_job_attempt(attempt_id : int, status : str, error : str | None):
+    """
+    Add job attempt logs when worker finish
+    """
+    with db.get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE job_attempts
+                SET status = %s,
+                    error = %s,
+                    finished_at = now()
+                WHERE id = %s
+                RETURNING id, job_id, worker_id, status, error, finished_at
+                """,
+                (status, error, attempt_id)
+            )
+            return cur.fetchone()
+        
+
+
 
             
 
