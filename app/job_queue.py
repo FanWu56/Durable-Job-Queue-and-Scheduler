@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from psycopg.types.json import Jsonb
 
-from db import get_conn
+from .db import get_conn
 
-def enqueue_jobs(
+def enqueue_job(
         task_name : str,
         payload: dict[str : Any] | None = None,
         priority: int = 0,
@@ -87,5 +87,22 @@ def get_job_attempts(job_id : int):
                 ORDER BY id ASC
                 """, (job_id,)
             )
+            return cur.fetchall()
+        
+def get_workers():
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    id,
+                    hostname,
+                    last_heartbeat_at,
+                    started_at
+                FROM workers
+                ORDER BY last_heartbeat_at DESC;
+                """
+            )
+
             return cur.fetchall()
 

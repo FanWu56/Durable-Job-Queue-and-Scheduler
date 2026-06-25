@@ -4,7 +4,7 @@ from pathlib import Path
 import psycopg
 from psycopg.rows import dict_row
 
-from config import DATABASE_URL
+from .config import DATABASE_URL
 
 
 @contextmanager

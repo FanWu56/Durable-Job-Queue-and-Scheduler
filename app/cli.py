@@ -45,7 +45,7 @@ def enqueue(
     if not isinstance(phrased_payload, dict):
         raise typer.BadParameter("payload must be valid json object")
     
-    returned_jobs =job_queue.enqueue_jobs(
+    returned_jobs =job_queue.enqueue_job(
         task_name,
         phrased_payload,
         priority,
@@ -109,7 +109,24 @@ def attempts(job_id : int):
             f"error={i['error']}"
     )
         
+@app.command("workers")
+def workers():
+    """
+    Show registered workers.
+    """
+    rows = job_queue.get_workers()
 
+    if not rows:
+        typer.echo("No workers found.")
+        return
+
+    for row in rows:
+        typer.echo(
+            f"{row['id']} "
+            f"hostname={row['hostname']} "
+            f"last_heartbeat_at={row['last_heartbeat_at']} "
+            f"started_at={row['started_at']}"
+        )
 
 
 

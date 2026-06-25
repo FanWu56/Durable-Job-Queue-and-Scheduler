@@ -1,10 +1,10 @@
 import socket
 import uuid
 import time
+from .rate_limit import is_rate_limited
 
 ##################  Below is source code python file
-import db
-import tasks
+from . import db, tasks
 
 def make_worker_id() -> str:
     """
@@ -82,7 +82,7 @@ def calculate_backoff_seconds(attempts_before_failure: int) -> int:
     return min(300, 10 * (2 ** attempts_before_failure))
 
 
-def mark_job_failed(job_id : int, err_reason: str, attempts_before_failure : int):
+def mark_job_failed(job_id : int, error: str, attempts_before_failure : int):
     """
     Retry the job with backoff until max_attempts is reached.
     If max_attempts is reached, move it to dead-letter state.
@@ -112,7 +112,7 @@ def mark_job_failed(job_id : int, err_reason: str, attempts_before_failure : int
                 WHERE id = %s
                 RETURNING id, status, attempts, max_attempts, run_at, last_error;
                 """,
-                (delay_seconds, err_reason, job_id)
+                (delay_seconds, error, job_id)
             )
             return cur.fetchone()
 
@@ -128,13 +128,17 @@ def run_worker(
     """
     if worker_id == None:
         worker_id = make_worker_id()
+    register_worker(worker_id)
     print(f"Worker started: {worker_id}")
 
     while True:
+            heartbeat_worker(worker_id)
+            recover_stuck_jobs(timeout_seconds=300)
+
             job = claim_next_job(worker_id)
 
             if job == None:
-                print("No already job found")
+                print("No ready job found")
                 if once:           #### if once == True, function end here
                     return
                 time.sleep(poll_interval)
@@ -145,6 +149,16 @@ def run_worker(
             job_id = job["id"]
             task_name = job["task_name"]
             payload = job["payload"]
+            print(f"Claimed job #{job_id}: {task_name}")
+
+            if is_rate_limited(task_name):
+                requeue_rate_limited_job(job_id, delay_seconds=60)
+                print(f"Job #{job_id} rate limited. Requeued for 60 seconds later.")
+
+                if once:
+                    return
+
+                continue
 
             attempt = start_job_attempt(job_id, worker_id)
 
@@ -188,7 +202,7 @@ def start_job_attempt(job_id : int, worker_id : str):
             return cur.fetchone()
         
 
-def finish_job_attempt(attempt_id : int, status : str, error : str | None):
+def finish_job_attempt(attempt_id : int, status : str, error : str | None = None):
     """
     Add job attempt logs when worker finish
     """
@@ -207,6 +221,81 @@ def finish_job_attempt(attempt_id : int, status : str, error : str | None):
             )
             return cur.fetchone()
         
+
+def register_worker(worker_id: str):
+    hostname = socket.gethostname()
+
+    with db.get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO workers (
+                    id,
+                    hostname,
+                    last_heartbeat_at,
+                    started_at
+                )
+                VALUES (%s, %s, now(), now())
+                ON CONFLICT (id)
+                DO UPDATE SET
+                    hostname = EXCLUDED.hostname,
+                    last_heartbeat_at = now();
+                """,
+                (worker_id, hostname),
+            )
+
+
+def heartbeat_worker(worker_id: str):
+    with db.get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE workers
+                SET last_heartbeat_at = now()
+                WHERE id = %s;
+                """,
+                (worker_id,),
+            )
+
+
+def recover_stuck_jobs(timeout_seconds: int = 300):
+    """
+    Move jobs stuck in running state back to queued.
+    """
+    with db.get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE jobs
+                SET status = 'queued',
+                    locked_by = NULL,
+                    locked_at = NULL,
+                    updated_at = now()
+                WHERE status = 'running'
+                  AND locked_at < now() - (%s * interval '1 second')
+                RETURNING id, task_name, locked_by, locked_at;
+                """,
+                (timeout_seconds,),
+            )
+
+            return cur.fetchall()
+        
+
+def requeue_rate_limited_job(job_id: int, delay_seconds: int = 10):
+    with db.get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE jobs
+                SET status = 'queued',
+                    run_at = now() + (%s * interval '1 second'),
+                    locked_by = NULL,
+                    locked_at = NULL,
+                    updated_at = now()
+                WHERE id = %s;
+                """,
+                (delay_seconds, job_id),
+            )
 
 
 
