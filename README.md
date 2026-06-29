@@ -218,27 +218,42 @@ docker compose up -d
 docker compose exec postgres psql -U postgres -c "CREATE DATABASE jobqueue_test;"
 ```
 
-Create a test database:
-
-```bash
-createdb -U postgres jobqueue_test
-```
-
-If `createdb` is not available, create the databases manually using pgAdmin.
-
-
-
 ### 5. Initialize database tables
 
 ```bash
-python app/cli.py init-db
+docker compose run --rm app python -m app.cli init-db
 ```
 
 ### 6. Check database connection
 
 ```bash
-python app/cli.py health
+docker compose run --rm app python -m app.cli health
 ```
+
+### 7. Enqueue a job
+
+```bash
+docker compose run --rm app python -m app.cli enqueue send_email --payload "{\"to\":\"test@example.com\"}"
+```
+
+### 8. Run a worker
+
+```bash
+docker compose run --rm app python -m app.cli worker --once
+```
+
+### 9. View jobs
+
+```bash
+docker compose run --rm app python -m app.cli jobs
+```
+
+### 10. Run test
+
+```bash
+docker compose run --rm app pytest -q
+```
+
 
 ## Usage
 
