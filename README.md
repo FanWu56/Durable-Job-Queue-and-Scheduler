@@ -58,50 +58,7 @@ Durable-Job-Queue-and-Scheduler/
   .gitignore
 ```
 
-## Database Design
 
-The project uses three main tables:
-
-### `jobs`
-
-Stores the durable job queue.
-
-Important columns:
-
-* `task_name`: name of the task to execute
-* `payload`: JSONB payload for the task
-* `status`: `queued`, `running`, `succeeded`, or `dead`
-* `priority`: higher priority jobs are claimed first
-* `run_at`: delayed jobs are only claimable after this time
-* `attempts`: number of failed attempts
-* `max_attempts`: maximum retries before dead-letter handling
-* `locked_by`: worker that claimed the job
-* `locked_at`: when the job was claimed
-* `last_error`: latest failure message
-
-### `job_attempts`
-
-Tracks every execution attempt for debugging and retry history.
-
-Important columns:
-
-* `job_id`
-* `worker_id`
-* `status`
-* `error`
-* `started_at`
-* `finished_at`
-
-### `workers`
-
-Tracks worker liveness.
-
-Important columns:
-
-* `id`
-* `hostname`
-* `last_heartbeat_at`
-* `started_at`
 
 ## Core Design
 
