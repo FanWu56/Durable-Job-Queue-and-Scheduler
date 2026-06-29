@@ -405,20 +405,3 @@ all jobs are marked succeeded
 
 This confirms that the queue prevents duplicate execution across concurrent workers.
 
-## Design Decisions
-
-### Why PostgreSQL?
-
-PostgreSQL provides durable storage and transactional row-level locking. This makes it a good fit for a reliable job queue where jobs should not be lost if the process crashes.
-
-### Why Redis?
-
-Redis is used for fast rate limiting. The job state remains durable in PostgreSQL, while Redis handles lightweight per-minute counters.
-
-### Why `FOR UPDATE SKIP LOCKED`?
-
-Without locking, two workers could read the same queued job at the same time and both execute it. `FOR UPDATE SKIP LOCKED` allows workers to safely claim different jobs concurrently.
-
-### Why store job attempts separately?
-
-The `jobs` table stores the current state of the job. The `job_attempts` table stores execution history, which is useful for debugging, retries, and failure analysis.
