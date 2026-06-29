@@ -422,23 +422,3 @@ Without locking, two workers could read the same queued job at the same time and
 ### Why store job attempts separately?
 
 The `jobs` table stores the current state of the job. The `job_attempts` table stores execution history, which is useful for debugging, retries, and failure analysis.
-
-## Future Improvements
-
-* Add Docker Compose for easier setup
-* Add a small web dashboard
-* Add structured logging
-* Add metrics for queue depth and job latency
-* Add task-specific retry policies
-* Add cron-style recurring jobs
-* Add graceful worker shutdown
-* Add database migrations with Alembic
-
-## Resume Summary
-
-Durable Job Queue and Scheduler — PostgreSQL, Redis, Python
-
-* Built a durable background job queue supporting delayed jobs, priority scheduling, retries with exponential backoff, dead-letter handling, Redis-based rate limiting, and worker heartbeats.
-* Implemented concurrent job claiming using PostgreSQL row-level locking and `FOR UPDATE SKIP LOCKED` to prevent duplicate execution across multiple workers.
-* Designed normalized job, attempt, and worker state tables with indexes to support efficient polling, retry tracking, liveness detection, and stuck-job recovery.
-* Added pytest coverage for enqueueing, delayed execution, priority ordering, retries, dead-letter behavior, Redis rate limiting, and concurrent worker safety.
