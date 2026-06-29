@@ -197,6 +197,7 @@ If the task exceeds its limit, the job is requeued with a delayed `run_at`.
 ## Getting Started
 
 ### 1. Install and Open Docker Desktop
+https://www.docker.com/products/docker-desktop/
 
 ### 2. Clone repo & Go to directory
 
