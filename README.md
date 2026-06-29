@@ -255,120 +255,13 @@ docker compose run --rm app pytest -q
 ```
 
 
-## Usage
 
-### Enqueue a job
 
-```bash
-python app/cli.py enqueue send_email --payload "{""to"":""test@example.com""}"
-```
 
-### Enqueue a delayed job
 
-```bash
-python app/cli.py enqueue send_email --payload "{""name"":""delayed""}" --delay 30
-```
 
-### Enqueue a priority job
-
-```bash
-python app/cli.py enqueue send_email --payload "{""name"":""high""}" --priority 10
-```
-
-### Show recent jobs
-
-```bash
-python app/cli.py jobs
-```
-
-### Start a worker
-
-```bash
-python app/cli.py worker
-```
-
-### Run one worker iteration
-
-```bash
-python app/cli.py worker --once
-```
-
-### Start multiple workers
-
-Open two terminals.
-
-Terminal 1:
-
-```bash
-python app/cli.py worker --worker-id worker-1
-```
-
-Terminal 2:
-
-```bash
-python app/cli.py worker --worker-id worker-2
-```
-
-### Show worker heartbeats
-
-```bash
-python app/cli.py workers
-```
-
-### Show job attempts
-
-```bash
-python app/cli.py attempts 1
-```
-
-### Reset stuck running jobs manually
-
-```bash
-python app/cli.py reset-running
-```
-
-## Example Output
-
-### Successful job execution
-
-```text
-Worker started: worker-1
-Claimed job #1: send_email
-Sending email with payload: {'to': 'test@example.com'}
-Job #1 succeeded.
-```
-
-### Retry and dead-letter behavior
-
-```text
-Claimed job #5: unstable_task
-Running unstable task with payload: {'fail_rate': 1}
-Job #5 failed: unstable_task failed randomly. status=queued attempts=1/3 next_run_at=...
-```
-
-After max attempts:
-
-```text
-Job #5 failed: unstable_task failed randomly. status=dead attempts=3/3
-```
-
-### Redis rate limiting
-
-```text
-[rate-limit] task=send_email count=1 limit=5
-Job #10 succeeded.
-
-[rate-limit] task=send_email count=6 limit=5
-Job #15 rate limited. Requeued for later.
-```
 
 ## Testing
-
-Run all tests:
-
-```bash
-pytest -q
-```
 
 Example result:
 
@@ -389,5 +282,3 @@ The test suite covers:
 * Concurrent worker safety
 * Rate-limited job requeueing
 * Redis rate limit behavior
-
-The most important concurrency test verifies that multiple workers do not claim the same job more than once.
