@@ -52,6 +52,7 @@ Durable-Job-Queue-and-Scheduler/
   schema.sql
   requirements.txt
   Dockerfile
+  docker-compose.yml
   README.md
   .env.example
   .gitignore
