@@ -196,17 +196,13 @@ If the task exceeds its limit, the job is requeued with a delayed `run_at`.
 
 ## Getting Started
 
-### 1. Clone repo & Go to directory
+### 1. Install and Open Docker Desktop
+
+### 2. Clone repo & Go to directory
 
 ```bash
 git clone https://github.com/FanWu56/Durable-Job-Queue-and-Scheduler
 cd Durable-Job-Queue-and-Scheduler
-```
-
-On Windows:
-
-```bash
-.venv\Scripts\activate
 ```
 
 ### 2. Install dependencies
