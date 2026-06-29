@@ -194,7 +194,7 @@ rate_limit:send_email:<minute_bucket>
 
 If the task exceeds its limit, the job is requeued with a delayed `run_at`.
 
-## Setup
+## Getting Started
 
 ### 1. Create a virtual environment
 
