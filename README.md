@@ -51,6 +51,7 @@ Durable-Job-Queue-and-Scheduler/
 
   schema.sql
   requirements.txt
+  Dockerfile
   README.md
   .env.example
   .gitignore
