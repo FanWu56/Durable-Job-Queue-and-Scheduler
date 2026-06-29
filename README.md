@@ -388,20 +388,3 @@ The test suite covers:
 * Redis rate limit behavior
 
 The most important concurrency test verifies that multiple workers do not claim the same job more than once.
-
-## Key Tests
-
-### Concurrent workers do not duplicate jobs
-
-The test creates 100 jobs and starts multiple worker loops in parallel. Each worker claims jobs using `FOR UPDATE SKIP LOCKED`.
-
-The test verifies:
-
-```text
-number of claimed jobs == 100
-number of unique claimed job IDs == 100
-all jobs are marked succeeded
-```
-
-This confirms that the queue prevents duplicate execution across concurrent workers.
-
