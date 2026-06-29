@@ -33,7 +33,7 @@ This project implements a simplified version of a production-style job queue sys
 ## Project Structure
 
 ```text
-sqlproj/
+Durable-Job-Queue-and-Scheduler/
   app/
     __init__.py
     cli.py
