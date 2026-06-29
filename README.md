@@ -206,18 +206,16 @@ git clone https://github.com/FanWu56/Durable-Job-Queue-and-Scheduler
 cd Durable-Job-Queue-and-Scheduler
 ```
 
-### 2. Install dependencies
+### 3. Start PostgreSQL + Redis + app
 
 ```bash
-pip install -r requirements.txt
+docker compose up -d
 ```
 
-### 3. Create PostgreSQL databases
-
-Create a development database:
+### 4. Create PostgreSQL databases
 
 ```bash
-createdb -U postgres jobqueue
+docker compose exec postgres psql -U postgres -c "CREATE DATABASE jobqueue_test;"
 ```
 
 Create a test database:
@@ -228,17 +226,7 @@ createdb -U postgres jobqueue_test
 
 If `createdb` is not available, create the databases manually using pgAdmin.
 
-### 4. Create `.env`
 
-Create a `.env` file:
-
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/jobqueue
-TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/jobqueue_test
-REDIS_URL=redis://localhost:6379/0
-```
-
-Update the username and password if your PostgreSQL setup is different.
 
 ### 5. Initialize database tables
 
