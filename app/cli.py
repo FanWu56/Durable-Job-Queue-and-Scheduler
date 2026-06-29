@@ -1,9 +1,9 @@
 import typer
 import json
 
-import job_queue
-import db
-import job_worker
+from app import job_queue
+from app import db
+from app import job_worker
 
 app = typer.Typer()
 
