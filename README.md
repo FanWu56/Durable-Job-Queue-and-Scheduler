@@ -1,7 +1,5 @@
 # Durable Job Queue and Scheduler
 
-A durable background job queue built with **Python, PostgreSQL, and Redis**.
-
 This project implements a simplified version of a production-style job queue system. It supports durable job storage, delayed jobs, priority scheduling, concurrent workers, retries with exponential backoff, dead-letter handling, Redis-based rate limiting, worker heartbeats, and stuck-job recovery.
 
 ## Features
