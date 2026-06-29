@@ -196,10 +196,11 @@ If the task exceeds its limit, the job is requeued with a delayed `run_at`.
 
 ## Getting Started
 
-### 1. Create a virtual environment
+### 1. Clone repo & Go to directory
 
 ```bash
-python -m venv .venv
+git clone https://github.com/FanWu56/Durable-Job-Queue-and-Scheduler
+cd Durable-Job-Queue-and-Scheduler
 ```
 
 On Windows:
